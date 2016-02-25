@@ -1,5 +1,5 @@
 import javafx.scene.image.ImageView;
 
-public class Projectile {
+public abstract class Projectile {
 	ImageView image;
 }

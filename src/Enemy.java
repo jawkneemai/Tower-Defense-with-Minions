@@ -1,4 +1,13 @@
+import javafx.scene.image.ImageView;
 
-public class Enemy {
-
+public abstract class Enemy {
+	ImageView image;
+	float walkSpeed;
+	int health;
+	int damage;
+	
+	
+	public Enemy() {
+		
+	}
 }

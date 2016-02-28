@@ -1,7 +1,6 @@
 import javafx.scene.image.ImageView;
 
-public abstract class Landscape {
-	ImageView image;
+public abstract class Landscape extends Image {
 	boolean walkable;
 	boolean buildable;
 	

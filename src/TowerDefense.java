@@ -80,9 +80,8 @@ public class TowerDefense extends Application {
 			if (scaleInput.getText() != null && !(scaleInput.getText().isEmpty())) {
 				try {
 					System.out.println(Double.parseDouble(scaleInput.getText()));
-				} catch (Exception e) {
+				} catch (Exception ec) {
 					scaleInput.setText("");
-					errormsg.setText("Please only input numbers");
 					return;
 				}
 			}

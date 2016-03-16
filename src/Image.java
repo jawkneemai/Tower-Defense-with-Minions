@@ -1,11 +1,18 @@
 import javafx.scene.image.ImageView;
 
 public abstract class Image {
-	ImageView image;
-	private Double centerX;
-	private Double centerY;
+	ImageView imageView;
+	javafx.scene.image.Image image;
+	protected Integer centerX, centerY;
 	
 	public Image() {
 	}
 		
+	public Integer getX() {
+		return centerX;
+	}
+	
+	public Integer getY() {
+		return centerY;
+	}
 }

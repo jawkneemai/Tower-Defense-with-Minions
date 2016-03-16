@@ -8,5 +8,10 @@ public abstract class Tower extends Image{
 	
 	
 	public Tower() {}
+	public Tower(Integer x, Integer y) {
+		centerX = x;
+		centerY = y;
+		
+	}
 	
 }

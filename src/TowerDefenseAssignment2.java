@@ -79,14 +79,18 @@ public class TowerDefenseAssignment2 extends Application {
 		// User Class
 		public static User user;
 		
+		javafx.scene.image.Image imageGrassTile;
+		public static final String grassImagePath = "file:sprites/grass2.png";
+		
 		GameController(Pane pane) {
 			
 			// Creating Background
 			// creates base layer of grass.
+			imageGrassTile = new javafx.scene.image.Image(grassImagePath);
 			for (int i=0; i < gridRows; i++) {
 				for (int j = 0; j < gridColumns; j++) {
-					Grass node = new Grass( (50 * i) + 25, (50 * j) + 25);
-					gridGroup.getChildren().add( node.tile );
+					Grass node = new Grass( (50 * i) + 25, (50 * j) + 25, imageGrassTile);
+					gridGroup.getChildren().add( node.imageView );
 					grid[i][j] = node;
 				}
 			}		

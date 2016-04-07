@@ -6,7 +6,7 @@ public abstract class Landscape extends Image {
 	static final int width = 50;
 	static final int height = 50;
 	
-	Polygon tile;
+	ImageView tile;
 	Color tileColor;
 	boolean walkable;
 	boolean buildable;
@@ -15,9 +15,5 @@ public abstract class Landscape extends Image {
 	public Landscape(Integer x, Integer y) {
 		centerX = x;
 		centerY = y;
-		tile = new Polygon( (centerX - width/2), (centerY - height/2),
-				(centerX + width/2), (centerY - height/2),
-				(centerX + width/2), (centerY + height/2),
-				(centerX - width/2) , (centerY + height/2));
 	}
 }

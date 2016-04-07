@@ -14,6 +14,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.text.*;
 import javafx.scene.image.*;
+import javafx.scene.input.MouseEvent;
 import javafx.geometry.*;
 import javafx.scene.Group;
 import java.util.Random;
@@ -25,48 +26,57 @@ import javafx.event.*;
 
 public class TowerDefenseAssignment3 extends Application {
 
-	private int sceneWidth = 350;
-	private int sceneHeight = 350;
+	// Game Settings
+	private static final int sceneWidth = 1000;
+	private static final int sceneHeight = 1000;
 	
 	GameController gameController;
+	
+	// Constants
+	public static final String livesImagePath = "file:sprites/heartLives.png";
+	public static final String moneyImagePath = "file:sprites/moneyCoins.png";
 	
 	public static void main( String[] args ) {
 		Application.launch( args );
 	}
 	
 	public void start( Stage primaryStage ) {
-		Pane pane = new Pane();
+		BorderPane pane = new BorderPane();
+		Pane gameArea = new Pane();
+		HBox gameControlsPane = new HBox();
+		HBox towerControlsPane = new HBox();
 		
-		gameController = new GameController(pane);
-		
-		// Directional Keys Listener
-		pane.setOnMouseClicked ( e -> {
-			GameController.createUserPath(GameController.user, 
-								GameController.user.getX(), 
-								GameController.user.getY(), 
-								e.getX(), 
-								e.getY());
-			GameController.user.setX(e.getX());
-			GameController.user.setY(e.getY());
-		});		
+		// Setting up UI
+		gameController = new GameController(gameArea); 
+		gameController.createUI(pane, gameArea, gameControlsPane, towerControlsPane);
+		RapidTower test = new RapidTower(500,500);
+		SniperTower test2 = new SniperTower(200,600);
+		SplashTower test3 = new SplashTower(400,400);
+		gameArea.getChildren().addAll(test.imageView, 
+													test2.imageView, 
+													test3.imageView);
+		//Rectangle clipper = new Rectangle(0, 0, 1000,1000);
+		//gameArea.setClip(clipper);
 		
 		// Scene set up
-		Scene scene = new Scene( pane, sceneWidth, sceneHeight );
+		ScrollPane sp = new ScrollPane();
+		sp.setContent(pane);
+		Scene scene = new Scene( sp, sceneWidth, sceneHeight );
 		primaryStage.setScene( scene );
 		primaryStage.show();
 
 		
 		// Adding animations to enemies
-		for (int i = 0; i < GameController.enemyList.length; i++) {
+		/*for (int i = 0; i < GameController.enemyList.length; i++) {
 			GameController.createPath( GameController.enemyList[i], 
 					GameController.enemyList[i].getX(), 
 					GameController.enemyList[i].getY() );
-		}
-		
-		
+		}*/		
 	}
 	
-	private static class GameController {
+	protected static class GameController {
+		
+		// ------------- Variables ------------- 
 		public static final Tower[] towerList = new Tower[10]; // Holds all stationary towers
 		public static final Enemy[] enemyList = new Enemy[10]; // Holds all moving enemies
 		
@@ -76,42 +86,199 @@ public class TowerDefenseAssignment3 extends Application {
 		public static final Landscape[][] grid = new Landscape[gridColumns][gridRows];
 		public static final Group gridGroup = new Group(); // displays the grid
 		
-		// User Class
-		public static User user;
+		javafx.scene.image.Image imageGrassTile;
+		public static final String grassImagePath = "file:sprites/grass2.png";
+		final String buttonStyle = "-fx-border-color: #e2e2e2; -fx-border-width: 1.5;" 
+				+ "-fx-background-radius: 0; "
+				+ "-fx-background-color: #3D3D3D; -fx-font-size: 15pt; "
+				+ "-fx-text-fill: #FFFFFF; -fx-background-insets: 0 0 0 0, 0, 1, 2";
+		final String buttonStyleHover = "-fx-border-color: #e2e2e2; -fx-border-width: 1.5;" 
+					+ "-fx-background-radius: 0; "
+					+ "-fx-background-color: #FFFFFF; -fx-font-size: 15pt; "
+					+ "-fx-text-fill: #3D3D3D; -fx-background-insets: 0 0 0 0, 0, 1, 2";
+		
+		protected Label labelLives;
+		protected Label labelMoney;
+		protected Integer lives = 50;
+		protected Integer money = 1000;
+		
 		
 		GameController(Pane pane) {
 			
+			labelLives = new Label();
+			labelMoney = new Label();
+			
 			// Creating Background
 			// creates base layer of grass.
+			imageGrassTile = new javafx.scene.image.Image(grassImagePath);
 			for (int i=0; i < gridRows; i++) {
 				for (int j = 0; j < gridColumns; j++) {
-					Grass node = new Grass( (50 * i) + 25, (50 * j) + 25);
-					gridGroup.getChildren().add( node.tile );
+					Grass node = new Grass( (50 * i) + 25, (50 * j) + 25, imageGrassTile);
+					gridGroup.getChildren().add( node.imageView );
 					grid[i][j] = node;
 				}
 			}		
 			pane.getChildren().add(gridGroup);
-
 			
 			// Draws everything on screen (Gravel Path, Random Towers, Enemy NPCs)
-			drawGravelPath();	
-			drawRandomTowers();
-			for (int i = 0; i < GameController.towerList.length; i++) {
-				pane.getChildren().add(GameController.towerList[i].imageView);
-			}
-			drawNPCs();
-			for (int i = 0; i < GameController.enemyList.length; i++) {
-				pane.getChildren().add(GameController.enemyList[i].imageView);
-			}
-			
-			// User Control
-			GameController.user = new User( grid[0][0].getX(), grid[0][0].getY());
-			pane.getChildren().add(GameController.user.imageView);
-			
+			drawGravelPath();
 		}
 		
-		GameController() {}
+		protected void createUI(Pane borderPane, Pane gameArea, Pane gameControlsPane, Pane towerControlsPane) {
+ 			
+			((BorderPane)borderPane).setCenter(gameArea);
+			((BorderPane)borderPane).setTop(gameControlsPane);
+			
+			// Game Controls Panel
+			
+			HBox livesBox = new HBox();
+			ImageView livesImageView = drawObject(livesImagePath);
+			livesImageView.setFitHeight(25);
+			livesImageView.setFitWidth(25);
+			labelLives.setText(String.valueOf(lives));
+			labelLives.setTextFill(Color.WHITE);
+			labelLives.setFont(Font.font(null, FontWeight.BOLD, 50));
+			livesBox.getChildren().addAll(livesImageView, labelLives);
+			livesBox.setSpacing(10);
+			livesBox.setAlignment(Pos.CENTER);
+			
+			HBox moneyBox = new HBox();
+			ImageView moneyImageView = drawObject(moneyImagePath);
+			moneyImageView.setFitHeight(35);
+			moneyImageView.setFitWidth(35);
+			labelMoney.setText(String.valueOf(money));
+			labelMoney.setTextFill(Color.WHITE);
+			labelMoney.setFont(Font.font(null, FontWeight.BOLD, 50));
+			moneyBox.getChildren().addAll(moneyImageView, labelMoney);
+			moneyBox.setSpacing(10);
+			moneyBox.setAlignment(Pos.CENTER);
 		
+			// Start Round Button
+			Button buttonStartRound = new Button("Start Round");
+			buttonStartRound.setStyle(buttonStyle);
+			buttonStartRound.addEventHandler(MouseEvent.MOUSE_PRESSED, new ButtonStyleHandlerPressed(buttonStartRound));
+			buttonStartRound.addEventHandler(MouseEvent.MOUSE_RELEASED, new ButtonStyleHandlerReleased(buttonStartRound));
+
+			Button buttonStartNewGame = new Button("New Game");
+			buttonStartNewGame.setStyle(buttonStyle);
+			buttonStartNewGame.addEventHandler(MouseEvent.MOUSE_PRESSED, new ButtonStyleHandlerPressed(buttonStartNewGame));
+			buttonStartNewGame.addEventHandler(MouseEvent.MOUSE_RELEASED, new ButtonStyleHandlerReleased(buttonStartNewGame));
+
+			
+			gameControlsPane.getChildren().addAll( livesBox, moneyBox, buttonStartRound, buttonStartNewGame);
+			gameControlsPane.setStyle("-fx-background-color: #3D3D3D");
+			
+			((HBox)gameControlsPane).setAlignment(Pos.CENTER);
+			((HBox)gameControlsPane).setSpacing(50);
+			
+			
+			// Tower Controls Panel
+			
+			((BorderPane)borderPane).setBottom(towerControlsPane);
+			ImageView moneyImageViewTowers1 = drawObject(moneyImagePath);
+			ImageView moneyImageViewTowers2 = drawObject(moneyImagePath);
+			ImageView moneyImageViewTowers3 = drawObject(moneyImagePath);
+
+			moneyImageViewTowers1.setFitHeight(20);
+			moneyImageViewTowers1.setFitWidth(20);
+			moneyImageViewTowers2.setFitHeight(20);
+			moneyImageViewTowers2.setFitWidth(20);
+			moneyImageViewTowers3.setFitHeight(20);
+			moneyImageViewTowers3.setFitWidth(20);
+			
+			VBox rapidTowerBox = new VBox();
+			Button buttonRapidTower = new Button("Rapid Tower");
+			buttonRapidTower.setStyle(buttonStyle);
+			buttonRapidTower.addEventHandler(MouseEvent.MOUSE_PRESSED, new ButtonStyleHandlerPressed(buttonRapidTower));
+			buttonRapidTower.addEventHandler(MouseEvent.MOUSE_RELEASED, new ButtonStyleHandlerReleased(buttonRapidTower));
+			Label labelRapidTowerCost = new Label( String.valueOf(new RapidTower().cost) );
+			labelRapidTowerCost.setTextFill(Color.WHITE);
+			HBox rapidTowerCostBox = new HBox();
+			rapidTowerCostBox.getChildren().addAll( moneyImageViewTowers1, labelRapidTowerCost );
+			rapidTowerCostBox.setSpacing(10);
+			rapidTowerCostBox.setAlignment(Pos.CENTER);
+			rapidTowerBox.getChildren().addAll( buttonRapidTower, rapidTowerCostBox );
+			rapidTowerBox.setSpacing(10);
+			rapidTowerBox.setAlignment(Pos.CENTER);
+			
+			VBox splashTowerBox = new VBox();
+			Button buttonSplashTower = new Button("Splash Tower");
+			buttonSplashTower.setStyle(buttonStyle);
+			buttonSplashTower.addEventHandler(MouseEvent.MOUSE_PRESSED, new ButtonStyleHandlerPressed(buttonSplashTower));
+			buttonSplashTower.addEventHandler(MouseEvent.MOUSE_RELEASED, new ButtonStyleHandlerReleased(buttonSplashTower));
+			Label labelSplashTowerCost = new Label( String.valueOf(new SplashTower().cost) );
+			labelSplashTowerCost.setTextFill(Color.WHITE);
+			HBox splashTowerCostBox = new HBox();
+			splashTowerCostBox.getChildren().addAll( moneyImageViewTowers2, labelSplashTowerCost );
+			splashTowerCostBox.setSpacing(10);
+			splashTowerCostBox.setAlignment(Pos.CENTER);
+			splashTowerBox.getChildren().addAll( buttonSplashTower, splashTowerCostBox );
+			splashTowerBox.setSpacing(10);
+			splashTowerBox.setAlignment(Pos.CENTER);
+			
+			VBox sniperTowerBox = new VBox();
+			Button buttonSniperTower = new Button("Sniper Tower");
+			buttonSniperTower.setStyle(buttonStyle);
+			buttonSniperTower.addEventHandler(MouseEvent.MOUSE_PRESSED, new ButtonStyleHandlerPressed(buttonSniperTower));
+			buttonSniperTower.addEventHandler(MouseEvent.MOUSE_RELEASED, new ButtonStyleHandlerReleased(buttonSniperTower));
+			Label labelSniperTowerCost = new Label( String.valueOf(new SniperTower().cost) );
+			labelSniperTowerCost.setTextFill(Color.WHITE);
+			HBox sniperTowerCostBox = new HBox();
+			sniperTowerCostBox.getChildren().addAll( moneyImageViewTowers3, labelSniperTowerCost );
+			sniperTowerCostBox.setSpacing(10);
+			sniperTowerCostBox.setAlignment(Pos.CENTER);
+			sniperTowerBox.getChildren().addAll( buttonSniperTower, sniperTowerCostBox );
+			sniperTowerBox.setSpacing(10);
+			sniperTowerBox.setAlignment(Pos.CENTER);
+			
+			Label labelTowerTitle = new Label("Towers");
+			labelTowerTitle.setTextFill(Color.WHITE);
+			labelTowerTitle.setFont(Font.font(null, FontWeight.BOLD, 50));
+			
+			towerControlsPane.getChildren().addAll( labelTowerTitle, rapidTowerBox, splashTowerBox, sniperTowerBox);
+			towerControlsPane.setStyle("-fx-background-color: #3D3D3D");
+			((HBox)towerControlsPane).setAlignment(Pos.CENTER);
+			((HBox)towerControlsPane).setSpacing(50);
+			towerControlsPane.setPadding(new Insets(15, 0, 15, 0));
+			
+			
+			// Top Control Button Handlers
+			buttonStartRound.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) {
+				}
+			});
+			
+			buttonStartNewGame.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) {
+					System.out.println("new game clicked!");
+				}
+			});
+			
+			// Bottom Tower Button Handlers
+			buttonRapidTower.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) {
+					System.out.println("new game clicked!");
+				}
+			});
+			
+			buttonSniperTower.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) {
+					System.out.println("new game clicked!");
+				}
+			});
+			
+			buttonSplashTower.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) {
+					System.out.println("new game clicked!");
+				}
+			});
+		}
+				
 		// This creates the gravel path for enemies to travel on.. Need to find a better way in the future.
 		private void drawGravelPath() {
 			gridGroup.getChildren().set(2, new Gravel(grid[0][2].getX(), grid[0][2].getY()).tile);
@@ -251,42 +418,7 @@ public class TowerDefenseAssignment3 extends Application {
 			gridGroup.getChildren().set(272, new Gravel(grid[13][12].getX(), grid[13][12].getY()).tile);
 			gridGroup.getChildren().set(271, new Gravel(grid[13][11].getX(), grid[13][11].getY()).tile);
 		}
-		
-		// Draws random stationary towers.
-		private void drawRandomTowers() {
-			towerList[0] = new Base(700, 500);
-			towerList[1] = new RapidTower(100, 50);
-			towerList[2] = new RapidTower(350,650);
-			towerList[3] = new RapidTower(700, 200);
-			towerList[4] = new SniperTower(750, 800);
-			towerList[5] = new SniperTower(500, 200);
-			towerList[6] = new SniperTower(450, 450);
-			towerList[7] = new SplashTower(900, 50);
-			towerList[8] = new SplashTower(50, 800);
-			towerList[9] = new SplashTower(0, 450);
-		}
-		
-		// Draws random enemy sprites to wander around
-		private void drawNPCs() {
-			Random r = new Random();
-			for (int i = 0; i < enemyList.length; i++) {
-				int index = r.nextInt(3);
-				switch (index) {
-					case 0:
-						enemyList[i] = new SmallEnemy(500, 500);
-						break;
-					case 1:
-						enemyList[i] = new MediumEnemy(500,500);
-						break;
-					case 2:
-						enemyList[i] = new BossEnemy(100, 100);
-						break;
-					default:
-						break;
-				}
-			}
-		}
-		
+				
 		// Creates a random path for enemies
 		public static void createPath( Enemy e, int oldX, int oldY ) {
 			Random r = new Random();	
@@ -308,7 +440,7 @@ public class TowerDefenseAssignment3 extends Application {
 			// rotate transition
 			RotateTransition rt = new RotateTransition( Duration.millis(100), e.imageView );
 			rt.setFromAngle(-5);
-			rt.setByAngle(10);
+			rt.setByAngle(7);
 			rt.setCycleCount(Timeline.INDEFINITE);
 			rt.setAutoReverse(true);
 			
@@ -326,47 +458,38 @@ public class TowerDefenseAssignment3 extends Application {
 							createPath(e, newX, newY ); // send new coordinates as next old coordinates
 						}
 					}
-			});
-			
-			
+			});	
 		}
 		
-		// Creates a path for the user every mouse click
-		public static void createUserPath( User u, double oldX, double oldY, double newX, double newY) {
-			// path transition
-			PathTransition patht = new PathTransition();
-			Path path = new Path();
-			
-			path.getElements().add (new MoveTo (oldX, oldY));
-		    path.getElements().add (new LineTo (newX, newY));
-			patht.setDuration(Duration.millis(2000));
-			patht.setNode(u.imageView);
-			patht.setPath(path);
-			
-			// rotate transition
-			RotateTransition rt = new RotateTransition( Duration.millis(100), u.imageView );
-			rt.setFromAngle(-5);
-			rt.setByAngle(10);
-			rt.setCycleCount(Timeline.INDEFINITE);
-			rt.setAutoReverse(true);
-			
-			// parallel transition to put above two together:
-			ParallelTransition pt = new ParallelTransition( patht, rt );
-			pt.play();
-			
-			patht.setOnFinished( new EventHandler<ActionEvent>() {
-				@Override
-				public void handle(ActionEvent event) {
-					if ( patht.getStatus() == Status.RUNNING) {
-						return;
-					} else {
-						pt.stop();
-					}
-				}
-			});
-		}	
-
+		// Returns an ImageView object when given an image path
+		public ImageView drawObject(String imagePath) {
+			javafx.scene.image.Image image = new javafx.scene.image.Image(imagePath);
+			ImageView imageView = new ImageView(image);
+			return imageView;
+		}
 		
+		// GENERAL BUTTON HANDLERS
+		protected class ButtonStyleHandlerPressed implements EventHandler<MouseEvent> {
+			Button activeButton;
+			public ButtonStyleHandlerPressed(Button button) {
+				activeButton = button;
+			}
+			@Override
+			public void handle(MouseEvent e) {
+				activeButton.setStyle(buttonStyleHover);
+			}
+		}
+		
+		protected class ButtonStyleHandlerReleased implements EventHandler<MouseEvent> {
+			Button activeButton;
+			public ButtonStyleHandlerReleased(Button button) {
+				activeButton = button;
+			}
+			@Override
+			public void handle(MouseEvent e) {
+				activeButton.setStyle(buttonStyle);
+			}
+		}
 	}
 }
 

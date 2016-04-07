@@ -63,6 +63,7 @@ public class TowerDefenseAssignment3 extends Application {
 		sp.setContent(pane);
 		Scene scene = new Scene( sp, sceneWidth, sceneHeight );
 		primaryStage.setScene( scene );
+		primaryStage.setResizable(false);
 		primaryStage.show();
 
 		
@@ -80,7 +81,7 @@ public class TowerDefenseAssignment3 extends Application {
 		public static final Tower[] towerList = new Tower[10]; // Holds all stationary towers
 		public static final Enemy[] enemyList = new Enemy[10]; // Holds all moving enemies
 		
-		// Grid will be 20x20 50 pixel tiles, so overall map is 1000x1000 pixels. Window is 350x350.
+		// Grid will be 20x20 50 pixel tiles, so overall map is 1000x1000 pixels.
 		private static final int gridColumns = 20;
 		private static final int gridRows = 20;
 		public static final Landscape[][] grid = new Landscape[gridColumns][gridRows];
@@ -88,6 +89,7 @@ public class TowerDefenseAssignment3 extends Application {
 		
 		javafx.scene.image.Image imageGrassTile;
 		public static final String grassImagePath = "file:sprites/grass2.png";
+		
 		final String buttonStyle = "-fx-border-color: #e2e2e2; -fx-border-width: 1.5;" 
 				+ "-fx-background-radius: 0; "
 				+ "-fx-background-color: #3D3D3D; -fx-font-size: 15pt; "
@@ -102,7 +104,11 @@ public class TowerDefenseAssignment3 extends Application {
 		protected Integer lives = 50;
 		protected Integer money = 1000;
 		
+		protected double originX, originY;
+		protected double offsetX, offsetY;
 		
+		
+		// Constructor
 		GameController(Pane pane) {
 			
 			labelLives = new Label();
@@ -260,22 +266,28 @@ public class TowerDefenseAssignment3 extends Application {
 			buttonRapidTower.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(MouseEvent e) {
-					System.out.println("new game clicked!");
+					RapidTower rapidTower = new RapidTower(900, 900);
+					createTowerDraggerHelper(gameArea, rapidTower);
+					gameArea.getChildren().addAll(rapidTower.imageView);
 				}
 			});
 			
 			buttonSniperTower.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(MouseEvent e) {
-					System.out.println("new game clicked!");
-				}
+					SniperTower sniperTower = new SniperTower(900, 900);
+					createTowerDraggerHelper(gameArea, sniperTower);
+					gameArea.getChildren().addAll(sniperTower.imageView);
+					}
 			});
 			
 			buttonSplashTower.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(MouseEvent e) {
-					System.out.println("new game clicked!");
-				}
+					SplashTower splashTower = new SplashTower(900, 900);
+					createTowerDraggerHelper(gameArea, splashTower);
+					gameArea.getChildren().addAll(splashTower.imageView);
+					}
 			});
 		}
 				
@@ -466,6 +478,92 @@ public class TowerDefenseAssignment3 extends Application {
 			javafx.scene.image.Image image = new javafx.scene.image.Image(imagePath);
 			ImageView imageView = new ImageView(image);
 			return imageView;
+		}
+		
+		// Creates the interface to "construct" a tower
+		private void createTowerDraggerHelper(Pane gameArea, Tower tower) {
+			FadeTransition ft = new FadeTransition(Duration.millis(1000), tower.attackRadiusVisual);
+			ft.setFromValue(1.0);
+			ft.setToValue(0.05);
+			ft.setCycleCount(Timeline.INDEFINITE);
+			ft.setAutoReverse(true);
+			ft.play();
+			Label labelDragIndicator = new Label("Drag tower to where you want it!");
+			labelDragIndicator.setTextFill(Color.WHITE);
+			labelDragIndicator.setFont(Font.font(null, FontWeight.BOLD, 17));
+			labelDragIndicator.setLayoutX(710);
+			labelDragIndicator.setLayoutY(870);
+			
+			// Buttons for placing tower or cancel event
+			Button buttonAccept = new Button("Place");
+			Button buttonCancel = new Button("Cancel");
+			buttonAccept.setStyle(buttonStyle);
+			buttonCancel.setStyle(buttonStyle);
+			buttonAccept.setLayoutX(900);
+			buttonAccept.setLayoutY(750);
+			buttonCancel.setLayoutX(887);
+			buttonCancel.setLayoutY(800);
+			buttonAccept.setOnMousePressed(new ButtonStyleHandlerPressed(buttonAccept));
+			buttonAccept.setOnMouseReleased(new ButtonStyleHandlerReleased(buttonAccept));
+			buttonCancel.setOnMousePressed(new ButtonStyleHandlerPressed(buttonCancel));
+			buttonCancel.setOnMouseReleased(new ButtonStyleHandlerReleased(buttonCancel));
+			
+			gameArea.getChildren().addAll(tower.attackRadiusVisual, labelDragIndicator, buttonAccept, buttonCancel);
+
+			// Button Event Handlers
+			tower.imageView.setOnMousePressed(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) { // Sets up coordinates for dragging in below handler
+					originX = e.getSceneX();
+					originY = e.getSceneY();
+					offsetX = ((ImageView)(e.getSource())).getTranslateX();
+					offsetY = ((ImageView)(e.getSource())).getTranslateY();
+					
+					gameArea.getChildren().remove(labelDragIndicator);
+				}
+			});
+			
+			tower.imageView.setOnMouseDragged(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) {
+					double differenceX = e.getSceneX() - originX;
+					double differenceY = e.getSceneY() - originY;
+					double newX = offsetX + differenceX;
+					double newY = offsetY + differenceY;
+					
+					((ImageView)(e.getSource())).setTranslateX(newX);
+					((ImageView)(e.getSource())).setTranslateY(newY);
+					tower.attackRadiusVisual.setTranslateX(newX);
+					tower.attackRadiusVisual.setTranslateY(newY);
+				}
+			});
+			
+			tower.imageView.setOnMouseReleased(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) {
+					
+				}
+			});
+			
+			buttonAccept.setOnMouseClicked(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) {
+					tower.imageView.setOnMousePressed(null);
+					tower.imageView.setOnMouseDragged(null);
+					gameArea.getChildren().removeAll(tower.attackRadiusVisual, labelDragIndicator, buttonAccept, buttonCancel);
+					money = money - tower.cost;
+					labelMoney.setText(String.valueOf(money));
+				}
+			});
+			
+			buttonCancel.setOnMouseClicked(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent e) {
+					tower.imageView.setOnMousePressed(null);
+					tower.imageView.setOnMouseDragged(null);
+					gameArea.getChildren().removeAll(tower.attackRadiusVisual, labelDragIndicator, buttonAccept, buttonCancel, tower.imageView);
+				}
+			});			
 		}
 		
 		// GENERAL BUTTON HANDLERS

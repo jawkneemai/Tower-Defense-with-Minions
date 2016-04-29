@@ -1,8 +1,8 @@
 import javafx.scene.image.ImageView;
 
 public abstract class Enemy extends Image {
-	float walkSpeed;
-	int health, damage;
+	double walkSpeed;
+	protected int health, damage;
 	
 	public Enemy() {}
 	
@@ -10,4 +10,9 @@ public abstract class Enemy extends Image {
 		centerX = x;
 		centerY = y;
 	}
+	
+	public void receiveDamage(int damage) {
+		health = health - damage;
+	}
+	
 }

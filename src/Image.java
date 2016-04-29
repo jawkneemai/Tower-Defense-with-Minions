@@ -12,7 +12,15 @@ public abstract class Image {
 		return centerX;
 	}
 	
+	public void setX(double x) {
+		centerX = (int)(x);
+	}
+	
 	public Integer getY() {
 		return centerY;
+	}
+	
+	public void setY(double y) {
+		centerY = (int)y;
 	}
 }

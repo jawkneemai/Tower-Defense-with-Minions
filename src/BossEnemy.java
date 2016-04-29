@@ -12,18 +12,22 @@ import javafx.geometry.*;
 
 public class BossEnemy extends Enemy {
 	// int walkspeed, health, damage 
-	public static final String imagePath = "file:sprites/minionlarge.png";
-	public BossEnemy (Integer x, Integer y) {
+	public BossEnemy (Integer x, Integer y, javafx.scene.image.Image image) {
 		super(x, y);
-		image = new Image(imagePath);
 		imageView = new ImageView(image); 
 		imageView.setX(x - (imageView.getFitWidth()/2));
 		imageView.setY(y - (imageView.getFitHeight()/2));
 		imageView.setFitHeight(100);
 		imageView.setPreserveRatio(true);
 
+		walkSpeed = 8;
+		health = 2000;
 	}
 	
-	public BossEnemy() {}
-
+	public int getHealth() {
+		return health;
+	}
+	public void setHealth(int newHealth) {
+		health = newHealth;
+	}
 }
